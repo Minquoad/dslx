@@ -1,0 +1,13 @@
+services:
+  dslx:
+    image: nginx:alpine
+    container_name: dslx
+    volumes:
+      - ./data:/usr/share/nginx/html:ro
+    networks:
+      - web
+    restart: unless-stopped
+
+networks:
+  web:
+    external: true
