@@ -1,3 +1,0 @@
-dslx.guenael.eu {
-    reverse_proxy dslx:80
-}

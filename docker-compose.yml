@@ -1,7 +1,7 @@
 services:
-  dslx:
+  nginx:
     image: nginx:alpine
-    container_name: dslx
+    container_name: ${COMPOSE_PROJECT_NAME}-nginx
     volumes:
       - ./data:/usr/share/nginx/html:ro
     networks:

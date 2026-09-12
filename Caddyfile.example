@@ -1,0 +1,7 @@
+example.tld {
+    reverse_proxy example-nginx:80
+}
+
+www.example.tld {
+    redir https://example.tld{uri} 301
+}
