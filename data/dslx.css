@@ -58,7 +58,6 @@ body {
     font: 12px/1.5 OpenDyslexic, Arial, sans-serif;
 }
 
-.player-header,
 .player-actions,
 .player-progress {
     display: flex;
@@ -66,27 +65,12 @@ body {
     gap: 10px;
 }
 
-.player-header {
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-
 #speech-status {
-    color: #b2b0aa;
-}
-
-.speech-controls[data-state="reading"] #speech-status,
-.speech-controls[data-state="paused"] #speech-status {
-    color: #d6b46a;
+    color: #e3b8a0;
 }
 
 .player-actions {
     flex-wrap: wrap;
-}
-
-#selection-info {
-    margin-left: auto;
-    color: #b2b0aa;
 }
 
 .player-settings {
@@ -148,12 +132,12 @@ body {
     color: #d6b46a;
 }
 
-#read-selection::before,
-.speech-controls[data-state="paused"] #pause-reading::before {
+#read-selection::before {
     clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
-#pause-reading::before {
+.speech-controls[data-state="reading"] #read-selection::before {
+    clip-path: none;
     background: linear-gradient(to right, currentColor 35%, transparent 35% 65%, currentColor 65%);
 }
 
@@ -163,6 +147,7 @@ body {
 }
 
 .speech-controls #read-selection {
+    min-width: 200px;
     background: #d6b46a;
     border-color: #e3c788;
     color: #181611;
@@ -248,9 +233,6 @@ body {
         order: 1;
     }
 
-    #selection-info {
-        margin-left: 0;
-    }
 }
 
 .editor {
@@ -294,7 +276,7 @@ textarea {
     color-scheme: dark;
     padding: 16px;
     background-color: transparent;
-    color: #e8e8e8;
+    color: #b8b6b0;
     border: 1px solid #ffffff12;
     border-top-color: #ffffff20;
     border-bottom-color: #00000070;

@@ -63,7 +63,6 @@ document.fonts.ready.then(scheduleUpdate);
 document.fonts.addEventListener('loadingdone', scheduleUpdate);
 
 const readButton = document.querySelector('#read-selection');
-const pauseButton = document.querySelector('#pause-reading');
 const stopButton = document.querySelector('#stop-reading');
 const speechStatus = document.querySelector('#speech-status');
 const languageSelect = document.querySelector('#speech-language');
@@ -72,7 +71,6 @@ const rateSelect = document.querySelector('#speech-rate');
 const player = document.querySelector('.speech-controls');
 const settingsToggle = document.querySelector('#toggle-settings');
 const playerSettings = document.querySelector('#player-settings');
-const selectionInfo = document.querySelector('#selection-info');
 const speechProgress = document.querySelector('#speech-progress');
 const speechPosition = document.querySelector('#speech-position');
 const speechSupported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
@@ -86,6 +84,38 @@ let readingVoice = null;
 let readingRate = 1;
 let totalCharacters = 0;
 let lastSelection = null;
+const speechSettingsKey = 'dslx.speech-settings';
+const speechPreferences = loadSpeechPreferences();
+
+function loadSpeechPreferences() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(speechSettingsKey));
+        return {
+            language: typeof saved?.language === 'string' ? saved.language : '',
+            voice: typeof saved?.voice === 'string' ? saved.voice : '',
+            rate: typeof saved?.rate === 'string' ? saved.rate : '',
+        };
+    } catch {
+        return { language: '', voice: '', rate: '' };
+    }
+}
+
+function saveSpeechPreferences(event) {
+    if (event.currentTarget !== rateSelect) {
+        speechPreferences.language = languageSelect.value;
+        speechPreferences.voice = voiceSelect.value;
+    }
+    speechPreferences.rate = rateSelect.value;
+    try {
+        localStorage.setItem(speechSettingsKey, JSON.stringify(speechPreferences));
+    } catch {
+        // Keep the controls usable when browser storage is unavailable.
+    }
+}
+
+if ([...rateSelect.options].some(option => option.value === speechPreferences.rate)) {
+    rateSelect.value = speechPreferences.rate;
+}
 
 settingsToggle.addEventListener('click', () => {
     playerSettings.hidden = !playerSettings.hidden;
@@ -101,7 +131,9 @@ function voiceKey(voice) {
 }
 
 function updateVoices() {
-    const previous = voiceSelect.value;
+    const previous = speechPreferences.language === languageSelect.value
+        ? speechPreferences.voice || voiceSelect.value
+        : voiceSelect.value;
     const voices = synth.getVoices().filter(voice => voiceLanguage(voice) === languageSelect.value);
     voiceSelect.replaceChildren(...(voices.length
         ? voices.map(voice => new Option(voice.name || 'Voix du navigateur', voiceKey(voice)))
@@ -118,7 +150,7 @@ function updateProgress(characters) {
 
 function updateLanguages() {
     if (!synth) return;
-    const previous = languageSelect.value;
+    const previous = speechPreferences.language || languageSelect.value;
     const languages = [...new Set(synth.getVoices().map(voiceLanguage).filter(Boolean))];
     // Some browsers deliver their voices asynchronously. Keep a usable default
     // until voiceschanged provides the list, without losing the current choice.
@@ -149,38 +181,32 @@ function selectedText() {
 
 function updateSpeechControls() {
     const selection = selectedText().trim();
+    const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
+    const textToRead = hasSelection ? selection : textarea.value.trim();
     if (!reading && selection !== lastSelection) {
         totalCharacters = 0;
         updateProgress(0);
-        if (speechSupported) {
-            speechStatus.textContent = selection ? 'Prêt à lire ta sélection.' : 'Sélectionne un passage pour l’écouter.';
-        }
     }
     lastSelection = selection;
-    readButton.disabled = !speechSupported || !selection;
-    pauseButton.disabled = !reading;
+    readButton.disabled = !speechSupported || (!reading && !textToRead);
+    readButton.textContent = reading
+        ? (paused ? 'Reprendre' : 'Pause')
+        : (hasSelection ? 'Lire la sélection' : 'Lire tout le texte');
     stopButton.disabled = !reading;
-    pauseButton.textContent = paused ? 'Reprendre' : 'Pause';
     languageSelect.disabled = !speechSupported || reading;
     voiceSelect.disabled = !speechSupported || reading || !voiceSelect.value;
     rateSelect.disabled = !speechSupported || reading;
     player.dataset.state = reading ? (paused ? 'paused' : 'reading') : 'idle';
-    const words = selection ? selection.split(/\s+/u).length : 0;
-    selectionInfo.textContent = words ? `${words} mot${words > 1 ? 's' : ''} sélectionné${words > 1 ? 's' : ''}` : 'Aucune sélection';
-    if (speechSupported && !reading && (!speechStatus.textContent
-        || /^(Sélectionne|Prêt à lire)/u.test(speechStatus.textContent))) {
-        speechStatus.textContent = selection ? 'Prêt à lire ta sélection.' : 'Sélectionne un passage pour l’écouter.';
-    }
 }
 
-function stopReading(message = '') {
+function stopReading(message = '', resetProgress = !message) {
     // Invalidate callbacks before cancelling: a previous utterance may still
     // dispatch an end/error event after another selection has started reading.
     currentUtterance = null;
     remainingText = '';
     reading = false;
     paused = false;
-    if (!message) {
+    if (resetProgress) {
         totalCharacters = 0;
         updateProgress(0);
     }
@@ -189,12 +215,13 @@ function stopReading(message = '') {
         if (synth.paused) synth.resume();
     }
     speechStatus.textContent = message;
+    speechStatus.hidden = !message;
     updateSpeechControls();
 }
 
 function speakNextPart() {
     if (!remainingText) {
-        stopReading('Lecture terminée.');
+        stopReading('', false);
         return;
     }
 
@@ -240,8 +267,21 @@ function speakNextPart() {
 }
 
 readButton.addEventListener('click', () => {
-    // Read the textarea's saved range even though clicking the button moves focus.
-    const text = selectedText();
+    if (reading) {
+        paused = !paused;
+        if (paused) {
+            synth.pause();
+        } else {
+            synth.resume();
+            if (!currentUtterance) speakNextPart();
+        }
+        updateSpeechControls();
+        return;
+    }
+    // Clicking the button preserves the textarea's range. Without a selection,
+    // read the entire text, including the part before the caret.
+    const hasSelection = textarea.selectionStart !== textarea.selectionEnd;
+    const text = hasSelection ? selectedText() : textarea.value;
     if (!speechSupported || !text.trim()) return;
     stopReading();
     remainingText = text;
@@ -252,38 +292,32 @@ readButton.addEventListener('click', () => {
     totalCharacters = text.length;
     updateProgress(0);
     reading = true;
-    speechStatus.textContent = 'Lecture en cours…';
     updateSpeechControls();
     speakNextPart();
 });
 
-pauseButton.addEventListener('click', () => {
-    if (!reading) return;
-    paused = !paused;
-    if (paused) {
-        synth.pause();
-    } else {
-        synth.resume();
-        if (!currentUtterance) speakNextPart();
-    }
-    if (reading) speechStatus.textContent = paused ? 'Lecture en pause.' : 'Lecture en cours…';
-    updateSpeechControls();
+stopButton.addEventListener('click', () => {
+    stopReading();
 });
-
-stopButton.addEventListener('click', () => stopReading('Lecture arrêtée.'));
-languageSelect.addEventListener('change', () => {
+languageSelect.addEventListener('change', event => {
     if (synth) updateVoices();
+    saveSpeechPreferences(event);
 });
+voiceSelect.addEventListener('change', saveSpeechPreferences);
+rateSelect.addEventListener('change', saveSpeechPreferences);
 for (const event of ['select', 'selectionchange', 'keyup', 'pointerup', 'focus']) {
     textarea.addEventListener(event, updateSpeechControls);
 }
 document.addEventListener('selectionchange', updateSpeechControls);
 textarea.addEventListener('input', () => {
-    if (reading) stopReading('Lecture arrêtée après modification du texte.');
+    if (reading) stopReading();
     else updateSpeechControls();
 });
 window.addEventListener('pagehide', () => stopReading());
-if (!speechSupported) speechStatus.textContent = 'Lecture vocale indisponible dans ce navigateur.';
+if (!speechSupported) {
+    speechStatus.textContent = 'Lecture vocale indisponible dans ce navigateur.';
+    speechStatus.hidden = false;
+}
 if (synth) {
     synth.addEventListener('voiceschanged', updateLanguages);
     updateLanguages();

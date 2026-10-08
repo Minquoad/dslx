@@ -15,15 +15,11 @@
 <main class="reader">
     <div class="speech-controls" role="group" aria-label="Lecture vocale">
         <div class="player-actions">
-            <button id="read-selection" type="button" disabled>Lire la sélection</button>
-            <button id="pause-reading" type="button" disabled>Pause</button>
+            <button id="read-selection" type="button" disabled>Lire tout le texte</button>
             <button id="stop-reading" type="button" disabled>Arrêter</button>
             <button id="toggle-settings" type="button" aria-expanded="false" aria-controls="player-settings">Réglages</button>
         </div>
-        <div class="player-header">
-            <span id="speech-status" role="status">Sélectionne un passage pour l’écouter.</span>
-            <span id="selection-info"></span>
-        </div>
+        <span id="speech-status" role="status" hidden></span>
         <div class="player-settings" id="player-settings" hidden>
             <label>Langue
                 <select id="speech-language">
