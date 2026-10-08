@@ -12,12 +12,51 @@
 </head>
 <body>
 
-<div class="editor">
-    <div class="reading-guide" aria-hidden="true">
-        <div class="active-line" hidden></div>
+<main class="reader">
+    <div class="speech-controls" role="group" aria-label="Lecture vocale">
+        <div class="player-actions">
+            <button id="read-selection" type="button" disabled>Lire la sélection</button>
+            <button id="pause-reading" type="button" disabled>Pause</button>
+            <button id="stop-reading" type="button" disabled>Arrêter</button>
+            <button id="toggle-settings" type="button" aria-expanded="false" aria-controls="player-settings">Réglages</button>
+        </div>
+        <div class="player-header">
+            <span id="speech-status" role="status">Sélectionne un passage pour l’écouter.</span>
+            <span id="selection-info"></span>
+        </div>
+        <div class="player-settings" id="player-settings" hidden>
+            <label>Langue
+                <select id="speech-language">
+                    <option value="fr-fr">Français (France)</option>
+                </select>
+            </label>
+            <label class="voice-setting">Voix
+                <select id="speech-voice" disabled>
+                    <option value="">Voix du navigateur</option>
+                </select>
+            </label>
+            <label>Vitesse
+                <select id="speech-rate">
+                    <option value="0.6">0,6 × — Très lente</option>
+                    <option value="0.8">0,8 × — Lente</option>
+                    <option value="1" selected>1 × — Normale</option>
+                    <option value="1.2">1,2 × — Rapide</option>
+                    <option value="1.5">1,5 × — Très rapide</option>
+                </select>
+            </label>
+        </div>
+        <div class="player-progress">
+            <progress id="speech-progress" aria-label="Avancement de la lecture" max="100" value="0"></progress>
+            <span id="speech-position" aria-hidden="true">0 %</span>
+        </div>
     </div>
-<textarea aria-label="Texte à lire" placeholder="Text" spellcheck="false"></textarea>
-</div>
+    <div class="editor">
+        <div class="reading-guide" aria-hidden="true">
+            <div class="active-line" hidden></div>
+        </div>
+        <textarea aria-label="Texte à lire" placeholder="Colle ton texte ici…" spellcheck="false"></textarea>
+    </div>
+</main>
 
 </body>
 </html>

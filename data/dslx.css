@@ -35,12 +35,229 @@ body {
     radial-gradient(ellipse at 50% 30%, #171719, #080809 75%);
 }
 
-.editor {
-    position: relative;
-    isolation: isolate;
+.reader {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 800px;
     max-width: 100%;
     height: 100%;
+}
+
+.speech-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #ffffff12;
+    border-top-color: #ffffff24;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #ffffff07, #00000020);
+    box-shadow: inset 0 1px 0 #ffffff04, 0 4px 16px #00000030;
+    color: #c9c9ca;
+    font: 12px/1.5 OpenDyslexic, Arial, sans-serif;
+}
+
+.player-header,
+.player-actions,
+.player-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-header {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+#speech-status {
+    color: #b2b0aa;
+}
+
+.speech-controls[data-state="reading"] #speech-status,
+.speech-controls[data-state="paused"] #speech-status {
+    color: #d6b46a;
+}
+
+.player-actions {
+    flex-wrap: wrap;
+}
+
+#selection-info {
+    margin-left: auto;
+    color: #b2b0aa;
+}
+
+.player-settings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.player-settings[hidden] {
+    display: none;
+}
+
+.player-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    color: #b2b0aa;
+}
+
+.speech-controls button,
+.speech-controls select {
+    min-height: 36px;
+    padding: 5px 10px;
+    border: 1px solid #ffffff20;
+    border-radius: 8px;
+    background: #ffffff08;
+    color: #e8e8e8;
+    font: inherit;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.speech-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.speech-controls button::before {
+    content: '';
+    flex: 0 0 10px;
+    height: 12px;
+    background: currentColor;
+}
+
+#toggle-settings {
+    margin-left: auto;
+}
+
+#toggle-settings::before {
+    display: none;
+}
+
+#toggle-settings[aria-expanded="true"] {
+    border-color: #d6b46a60;
+    color: #d6b46a;
+}
+
+#read-selection::before,
+.speech-controls[data-state="paused"] #pause-reading::before {
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+#pause-reading::before {
+    background: linear-gradient(to right, currentColor 35%, transparent 35% 65%, currentColor 65%);
+}
+
+#stop-reading::before {
+    height: 10px;
+    border-radius: 2px;
+}
+
+.speech-controls #read-selection {
+    background: #d6b46a;
+    border-color: #e3c788;
+    color: #181611;
+}
+
+.speech-controls #read-selection:hover:enabled {
+    background: #e3c788;
+    border-color: #efd7a1;
+}
+
+.speech-controls select {
+    color-scheme: dark;
+    width: 100%;
+    min-width: 0;
+}
+
+.speech-controls select option {
+    background-color: #202123;
+    color: #e8e8e8;
+}
+
+.speech-controls button:hover:enabled {
+    background: #d6b46a18;
+    border-color: #d6b46a60;
+}
+
+.speech-controls button:focus-visible,
+.speech-controls select:focus-visible {
+    outline: 2px solid #d6b46a99;
+    outline-offset: 2px;
+}
+
+.speech-controls button:disabled,
+.speech-controls select:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.player-progress progress {
+    appearance: none;
+    flex: 1;
+    width: 100%;
+    height: 5px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 3px;
+    background: #ffffff0c;
+    accent-color: #d6b46a;
+}
+
+.player-progress progress::-webkit-progress-bar {
+    background: #ffffff0c;
+}
+
+.player-progress progress::-webkit-progress-value {
+    background: #d6b46a;
+    border-radius: 3px;
+}
+
+.player-progress progress::-moz-progress-bar {
+    background: #d6b46a;
+    border-radius: 3px;
+}
+
+#speech-position {
+    min-width: 42px;
+    color: #b2b0aa;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+    .speech-controls {
+        padding: 12px;
+    }
+
+    .player-settings {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .voice-setting {
+        grid-column: 1 / -1;
+        order: 1;
+    }
+
+    #selection-info {
+        margin-left: 0;
+    }
+}
+
+.editor {
+    position: relative;
+    isolation: isolate;
+    flex: 1;
+    min-height: 0;
 }
 
 .reading-guide {
